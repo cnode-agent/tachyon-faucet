@@ -17,3 +17,6 @@ auto_shield = true
 shield_amount_zat = 100000000    # Refill with 1 ZEC when no spendable note is large enough
 poll_seconds = 15
 command_timeout = 1800
+# Oblivious Synchronization Service. Without oss_url, devtool proves locally.
+# oss_url = "http://127.0.0.1:8240"
+# oss_cookie_file = "/path/to/oss/.cookie"

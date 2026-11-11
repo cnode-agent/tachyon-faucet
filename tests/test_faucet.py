@@ -254,17 +254,35 @@ class ConfigTests(unittest.TestCase):
             config = load_config(path)
             self.assertEqual(config.cooldown_seconds, 300)
             self.assertEqual(config.wallet_dir, Path(temp).resolve() / "wallet")
+            self.assertIsNone(config.oss_url)
             for extra in ('cooldown_seconds=0', 'cooldown_seconds=true', 'unknown=1',
                           'allowed_origins=["https://example.com/path"]', 'auto_shield="yes"',
                           'shield_amount_zat=10', 'pow_difficulty_bits=-1',
                           'pow_difficulty_bits=17', 'pow_difficulty_bits=true',
-                          'pow_challenge_seconds=0'):
+                          'pow_challenge_seconds=0', 'oss_url="ftp://oss"',
+                          'oss_url="http://user:pass@oss"', 'oss_cookie_file=1'):
                 path.write_text(base + extra)
                 with self.assertRaises(ValueError, msg=extra):
                     load_config(path)
 
 
 class SubprocessTests(unittest.IsolatedAsyncioTestCase):
+    async def test_oss_settings_reach_devtool(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            script = root / "fake-devtool"
+            script.write_text(f"""#!{sys.executable}
+import json, os
+print(json.dumps({{key: os.environ.get(key) for key in ('TACHYON_OSS_URL', 'TACHYON_OSS_COOKIE')}}))
+""")
+            script.chmod(0o700)
+            path = root / "config.toml"
+            path.write_text('devtool="fake-devtool"\nwallet_dir="wallet"\nstate_dir="state"\n'
+                            'oss_url="http://127.0.0.1:8240"\noss_cookie_file="oss.cookie"\n')
+            self.assertEqual(await Devtool(load_config(path)).call("address"),
+                             {"TACHYON_OSS_URL": "http://127.0.0.1:8240",
+                              "TACHYON_OSS_COOKIE": str(root / "oss.cookie")})
+
     async def test_arguments_are_not_a_shell_and_timeout_reaps_process(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

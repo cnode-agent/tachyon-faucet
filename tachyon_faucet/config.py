@@ -54,6 +54,8 @@ class Config:
     command_timeout: int = 1800
     pow_difficulty_bits: int = 7
     pow_challenge_seconds: int = 600
+    oss_url: str | None = None  # Unset: devtool self-proves locally.
+    oss_cookie_file: Path | None = None
 
 
 def load_config(path):
@@ -63,7 +65,9 @@ def load_config(path):
     unknown = set(values) - set(Config.__dataclass_fields__)
     if unknown:
         raise ValueError(f"Unknown config fields: {sorted(unknown)}")
-    for key in ("devtool", "wallet_dir", "state_dir"):
+    for key in ("devtool", "wallet_dir", "state_dir", "oss_cookie_file"):
+        if key == "oss_cookie_file" and key not in values:
+            continue  # Optional
         value = values.get(key)
         if not isinstance(value, str) or not value:
             raise ValueError(f"{key} must be a nonempty path")
@@ -78,6 +82,10 @@ def load_config(path):
         value = getattr(config, key)
         if type(value) is not int or not low <= value <= high:
             raise ValueError(f"{key} must be an integer in {low}..{high}")
+    if config.oss_url is not None:
+        url = urlsplit(str(config.oss_url))
+        if url.scheme not in ("http", "https") or not url.hostname or url.username or url.password:
+            raise ValueError("oss_url must be an HTTP(S) URL without embedded credentials")
     if type(config.auto_shield) is not bool:
         raise ValueError("auto_shield must be true or false")
     if config.shield_amount_zat < config.amount_zat + FEE:

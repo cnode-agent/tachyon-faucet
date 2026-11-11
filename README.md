@@ -71,10 +71,21 @@ concurrently with another service or manual spending commands.
 | `shield_amount_zat` | `100000000` | Maximum refill amount |
 | `poll_seconds` | `15` | Wallet sync/recovery interval |
 | `command_timeout` | `1800` | Maximum seconds per devtool command |
+| `oss_url` | Unset | Oblivious Synchronization Service URL, passed to devtool as `TACHYON_OSS_URL` |
+| `oss_cookie_file` | Unset | OSS cookie file for HTTP Basic auth, passed as `TACHYON_OSS_COOKIE` |
 
 Restart after configuration changes. Existing claims retain their original
 amounts, recipients, and cooldown deadlines. Wallet and state directories must be
 mode `0700`; the service creates its SQLite files with mode `0600`.
+
+## Oblivious Synchronization Service
+
+With `oss_url` set, the wallet gets closed-epoch proof evidence from a
+`tachyon-oss` service (default `http://127.0.0.1:8240`) instead of proving it
+locally. Use a devtool build with OSS support. Without `oss_url`, devtool proves
+locally as before. If devtool gives up with `OSS not ready`, the payment stays
+in progress with its journaled operation ID, and the next poll retries it.
+Restart the service after changing either setting.
 
 ## Per-IP cooldown and reverse proxy
 

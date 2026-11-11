@@ -29,10 +29,15 @@ class Devtool:
         self.config = config
 
     async def call(self, *args):
+        env = dict(os.environ)
+        if self.config.oss_url:
+            env["TACHYON_OSS_URL"] = self.config.oss_url
+        if self.config.oss_cookie_file:
+            env["TACHYON_OSS_COOKIE"] = str(self.config.oss_cookie_file)
         process = await asyncio.create_subprocess_exec(
             str(self.config.devtool), "tachyon", "--wallet-dir", str(self.config.wallet_dir),
             "--quiet", *map(str, args), stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE, start_new_session=True)
+            stderr=asyncio.subprocess.PIPE, start_new_session=True, env=env)
         readers = [asyncio.create_task(read_bounded(process.stdout, 8 * 1024 * 1024)),
                    asyncio.create_task(read_bounded(process.stderr, 128 * 1024))]
         try:
