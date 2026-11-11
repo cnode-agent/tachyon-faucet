@@ -20,7 +20,7 @@ ProtectSystem=strict
 ProtectHome=read-only
 PrivateTmp=true
 # These directories must exist and match config.local.toml.
-ReadWritePaths=/home/ubuntu/tachyon-faucet-data/wallet /home/ubuntu/tachyon-faucet-data/state
+ReadWritePaths=/home/ubuntu/faucet-wallet /home/ubuntu/tachyon-faucet-data/state
 
 [Install]
 WantedBy=multi-user.target
